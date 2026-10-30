@@ -19,10 +19,9 @@ def read_state(directory):
     return json.loads((Path(directory) / "state.json").read_text())
 
 
-def send_input(directory, command, timeout=5, wait=True):
+def send_input(directory, command, observed, timeout=5, wait=True):
     """No automatic retry: a lost acknowledgment must never duplicate a move."""
-    state = read_state(directory)
-    wire = f"{command} {state['sequence']}".encode("ascii")
+    wire = f"{command} {observed['session']} {observed['sequence']}".encode("ascii")
     # A short private pathname is required by macOS Unix sockets.
     with tempfile.TemporaryDirectory(prefix="brogue-client-", dir="/tmp") as temp:
         with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as client:
@@ -37,6 +36,8 @@ def send_input(directory, command, timeout=5, wait=True):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         current = read_state(directory)
+        if current["session"] != observed["session"]:
+            raise RuntimeError("Game session changed while waiting for input result")
         if (current["sequence"] > result["sequence"]
                 and current["last_input_id"] >= result["input_id"]):
             return current
@@ -47,7 +48,8 @@ def send_input(directory, command, timeout=5, wait=True):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dir", default=f"/tmp/brogue-bridge-{os.getuid()}")
+    parser.add_argument("--dir", default=f"/tmp/brogue-control-{os.getuid()}")
+    parser.add_argument("--observed", type=Path, help="JSON observation used to decide this input (required for actions)")
     parser.add_argument("--timeout", type=float, default=5)
     parser.add_argument("--no-wait", action="store_true", help="return acknowledgment only")
     sub = parser.add_subparsers(dest="action", required=True)
@@ -83,10 +85,13 @@ def main():
                 if not (0 <= args.x < 100 and 0 <= args.y < 34):
                     parser.error("screen coordinates must be x=0..99, y=0..33")
                 command = f"{args.action} {args.x} {args.y}"
-            state = send_input(args.dir, command, args.timeout, not args.no_wait)
+            if args.observed is None:
+                parser.error("actions require --observed PATH with the JSON used to decide the action")
+            observed = json.loads(args.observed.read_text())
+            state = send_input(args.dir, command, observed, args.timeout, not args.no_wait)
         print(json.dumps(state, ensure_ascii=False, indent=2))
     except (OSError, ValueError, RuntimeError, TimeoutError) as error:
-        parser.exit(1, f"Bridge: {error}\n")
+        parser.exit(1, f"External control: {error}\n")
 
 
 if __name__ == "__main__":

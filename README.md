@@ -1,8 +1,8 @@
 Brogue CE
 =========
 
-This fork adds an opt-in **visible-screen JSON and local input bridge**.
-See [VISIBLE_BRIDGE.md](VISIBLE_BRIDGE.md) for setup and usage.
+This fork adds an opt-in **external control API**.
+See [EXTERNAL_CONTROL.md](EXTERNAL_CONTROL.md) for setup and usage.
 
 > *Countless adventurers before you have descended this torch-lit staircase,
 > seeking the promised riches below. As you reach the bottom and step into

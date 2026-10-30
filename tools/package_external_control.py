@@ -15,7 +15,7 @@ def run(*args):
 
 def package(destination):
     destination = Path(destination).resolve()
-    app = destination / 'Brogue Bridge.app'
+    app = destination / 'Brogue External Control.app'
     if app.exists():
         raise SystemExit(f'Refusing to overwrite {app}; choose an empty destination.')
     mac = app / 'Contents/MacOS'
@@ -29,9 +29,9 @@ def package(destination):
     shutil.copy2(ROOT / 'bin/keymap.txt', resources / 'keymap.txt')
     with (ROOT / 'macos/Info.plist').open('rb') as source:
         info = plistlib.load(source)
-    info.update(CFBundleIdentifier='jp.toyoshi.BrogueVisibleBridge',
-                CFBundleExecutable='launch', CFBundleName='Brogue Bridge',
-                CFBundleDisplayName='Brogue Bridge')
+    info.update(CFBundleIdentifier='jp.toyoshi.BrogueExternalControl',
+                CFBundleExecutable='launch', CFBundleName='Brogue External Control',
+                CFBundleDisplayName='Brogue External Control')
     with (app / 'Contents/Info.plist').open('wb') as output:
         plistlib.dump(info, output)
     launcher = mac / 'launch'
@@ -41,7 +41,7 @@ mac=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 root=$(CDPATH= cd -- "$mac/../../.." && pwd)
 mkdir -p "$root/Session"
 cd "$root/Session"
-exec "$mac/brogue" --data-dir "$mac/../Resources" --bridge-dir "/tmp/brogue-bridge-$(id -u)" "$@" >> "$root/launch.log" 2>&1
+exec "$mac/brogue" --data-dir "$mac/../Resources" --control-dir "/tmp/brogue-control-$(id -u)" "$@" >> "$root/launch.log" 2>&1
 ''')
     launcher.chmod(0o755)
     copied = {}
@@ -105,8 +105,8 @@ exec "$mac/brogue" --data-dir "$mac/../Resources" --bridge-dir "/tmp/brogue-brid
         run('codesign', '--force', '--sign', '-', str(library))
     run('codesign', '--force', '--sign', '-', str(mac / 'brogue'))
     run('codesign', '--force', '--sign', '-', str(app))
-    shutil.copy2(ROOT / 'tools/visible_bridge.py', destination / 'visible_bridge.py')
-    shutil.copy2(ROOT / 'VISIBLE_BRIDGE.md', destination / 'VISIBLE_BRIDGE.md')
+    shutil.copy2(ROOT / 'tools/external_control.py', destination / 'external_control.py')
+    shutil.copy2(ROOT / 'EXTERNAL_CONTROL.md', destination / 'EXTERNAL_CONTROL.md')
     shutil.copy2(ROOT / 'LICENSE.txt', destination / 'LICENSE.txt')
     print(app)
 

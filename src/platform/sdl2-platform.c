@@ -6,7 +6,7 @@
 #include <SDL_image.h>
 #include "platform.h"
 #include "tiles.h"
-#include "visible-bridge.h"
+#include "external-control.h"
 
 #define PAUSE_BETWEEN_EVENT_POLLING     36L//17
 #define MAX_REMAPS  128
@@ -316,7 +316,7 @@ static boolean _pauseForMilliseconds(short ms, PauseBehavior behavior) {
 static void _nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
     updateScreen();
 
-    visibleBridgeBeginInput(textInput);
+    externalControlBeginInput(textInput);
 
     if (lastEvent.eventType != EVENT_ERROR) {
         *returnEvent = lastEvent;
@@ -332,7 +332,7 @@ static void _nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boo
 
         updateScreen();
 
-        if (visibleBridgePoll(returnEvent)) break;
+        if (externalControlPoll(returnEvent)) break;
         if (pollBrogueEvent(returnEvent, textInput)) break;
 
         _delayUpTo(PAUSE_BETWEEN_EVENT_POLLING);
@@ -396,7 +396,7 @@ static void _plotChar(
     short foreRed, short foreGreen, short foreBlue,
     short backRed, short backGreen, short backBlue
 ) {
-    visibleBridgePlot(inputChar, x, y, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue);
+    externalControlPlot(inputChar, x, y, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue);
     updateTile(y, x, fontIndex(inputChar),
         foreRed, foreGreen, foreBlue,
         backRed, backGreen, backBlue);

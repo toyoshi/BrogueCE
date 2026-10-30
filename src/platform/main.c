@@ -2,7 +2,7 @@
 #include <limits.h>
 #include "platform.h"
 #include "GlobalsBase.h"
-#include "visible-bridge.h"
+#include "external-control.h"
 
 #ifndef DATADIR
 #error "The DATADIR macro is undefined."
@@ -19,7 +19,7 @@ boolean isCsvFormat = false;
 
 static void printCommandlineHelp() {
     printf("%s",
-    "--bridge-dir DIRECTORY     enable visible JSON and local input (SDL, POSIX only)\n"
+    "--control-dir DIRECTORY     enable external control API (SDL, POSIX only)\n"
     "--help         -h          print this help message and exit \n"
     "--version      -V          print the version and exit\n"
     "--scores                   dump scores to output and exit\n"
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     currentConsole = nullConsole;
 #endif
 
-    const char *bridgeDirectory = NULL;
+    const char *controlDirectory = NULL;
 
     rogue.nextGame = NG_NOTHING;
     rogue.nextGamePath[0] = '\0';
@@ -115,12 +115,12 @@ int main(int argc, char *argv[])
 
     int i;
     for (i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--bridge-dir") == 0) {
-            if (i + 1 == argc || bridgeDirectory) {
-                cliError("Bridge: ", "specify exactly one directory");
+        if (strcmp(argv[i], "--control-dir") == 0) {
+            if (i + 1 == argc || controlDirectory) {
+                cliError("External control: ", "specify exactly one directory");
                 return 1;
             }
-            bridgeDirectory = argv[++i];
+            controlDirectory = argv[++i];
             continue;
         }
         if (strcmp(argv[i], "--scores") == 0) {
@@ -356,15 +356,15 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (bridgeDirectory) {
+    if (controlDirectory) {
 #ifdef BROGUE_SDL
         if (currentConsole.nextKeyOrMouseEvent != sdlConsole.nextKeyOrMouseEvent) {
-            fprintf(stderr, "Bridge requires the SDL graphical backend.\n");
+            fprintf(stderr, "External control requires the SDL graphical backend.\n");
             return 1;
         }
-        if (!visibleBridgeInit(bridgeDirectory)) return 1;
+        if (!externalControlInit(controlDirectory)) return 1;
 #else
-        fprintf(stderr, "Bridge requires an SDL build on a POSIX system.\n");
+        fprintf(stderr, "External control requires an SDL build on a POSIX system.\n");
         return 1;
 #endif
     }
