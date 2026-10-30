@@ -2,6 +2,7 @@
 #include <limits.h>
 #include "platform.h"
 #include "GlobalsBase.h"
+#include "visible-bridge.h"
 
 #ifndef DATADIR
 #error "The DATADIR macro is undefined."
@@ -18,6 +19,7 @@ boolean isCsvFormat = false;
 
 static void printCommandlineHelp() {
     printf("%s",
+    "--bridge-dir DIRECTORY     enable visible JSON and local input (SDL, POSIX only)\n"
     "--help         -h          print this help message and exit \n"
     "--version      -V          print the version and exit\n"
     "--scores                   dump scores to output and exit\n"
@@ -100,6 +102,8 @@ int main(int argc, char *argv[])
     currentConsole = nullConsole;
 #endif
 
+    const char *bridgeDirectory = NULL;
+
     rogue.nextGame = NG_NOTHING;
     rogue.nextGamePath[0] = '\0';
     rogue.nextGameSeed = 0;
@@ -111,6 +115,14 @@ int main(int argc, char *argv[])
 
     int i;
     for (i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--bridge-dir") == 0) {
+            if (i + 1 == argc || bridgeDirectory) {
+                cliError("Bridge: ", "specify exactly one directory");
+                return 1;
+            }
+            bridgeDirectory = argv[++i];
+            continue;
+        }
         if (strcmp(argv[i], "--scores") == 0) {
             // just dump the scores and quit!
             dumpScores();
@@ -344,6 +356,18 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    if (bridgeDirectory) {
+#ifdef BROGUE_SDL
+        if (currentConsole.nextKeyOrMouseEvent != sdlConsole.nextKeyOrMouseEvent) {
+            fprintf(stderr, "Bridge requires the SDL graphical backend.\n");
+            return 1;
+        }
+        if (!visibleBridgeInit(bridgeDirectory)) return 1;
+#else
+        fprintf(stderr, "Bridge requires an SDL build on a POSIX system.\n");
+        return 1;
+#endif
+    }
     hasGraphics = (currentConsole.setGraphicsMode != NULL);
     // Now actually set graphics. We do this to ensure there is exactly one
     // call, whether true or false

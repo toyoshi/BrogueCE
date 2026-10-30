@@ -1,6 +1,9 @@
 Brogue CE
 =========
 
+This fork adds an opt-in **visible-screen JSON and local input bridge**.
+See [VISIBLE_BRIDGE.md](VISIBLE_BRIDGE.md) for setup and usage.
+
 > *Countless adventurers before you have descended this torch-lit staircase,
 > seeking the promised riches below. As you reach the bottom and step into
 > the wide cavern, the doors behind you seal with a powerful magic...*
