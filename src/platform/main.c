@@ -2,6 +2,7 @@
 #include <limits.h>
 #include "platform.h"
 #include "GlobalsBase.h"
+#include "external-control.h"
 
 #ifndef DATADIR
 #error "The DATADIR macro is undefined."
@@ -18,6 +19,7 @@ boolean isCsvFormat = false;
 
 static void printCommandlineHelp() {
     printf("%s",
+    "--control-dir DIRECTORY     enable external control API (SDL, POSIX only)\n"
     "--help         -h          print this help message and exit \n"
     "--version      -V          print the version and exit\n"
     "--scores                   dump scores to output and exit\n"
@@ -100,6 +102,8 @@ int main(int argc, char *argv[])
     currentConsole = nullConsole;
 #endif
 
+    const char *controlDirectory = NULL;
+
     rogue.nextGame = NG_NOTHING;
     rogue.nextGamePath[0] = '\0';
     rogue.nextGameSeed = 0;
@@ -111,6 +115,14 @@ int main(int argc, char *argv[])
 
     int i;
     for (i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--control-dir") == 0) {
+            if (i + 1 == argc || controlDirectory) {
+                cliError("External control: ", "specify exactly one directory");
+                return 1;
+            }
+            controlDirectory = argv[++i];
+            continue;
+        }
         if (strcmp(argv[i], "--scores") == 0) {
             // just dump the scores and quit!
             dumpScores();
@@ -344,6 +356,18 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    if (controlDirectory) {
+#ifdef BROGUE_SDL
+        if (currentConsole.nextKeyOrMouseEvent != sdlConsole.nextKeyOrMouseEvent) {
+            fprintf(stderr, "External control requires the SDL graphical backend.\n");
+            return 1;
+        }
+        if (!externalControlInit(controlDirectory)) return 1;
+#else
+        fprintf(stderr, "External control requires an SDL build on a POSIX system.\n");
+        return 1;
+#endif
+    }
     hasGraphics = (currentConsole.setGraphicsMode != NULL);
     // Now actually set graphics. We do this to ensure there is exactly one
     // call, whether true or false
